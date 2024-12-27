@@ -1,5 +1,10 @@
 package omapi
 
+type Status struct {
+	Code    int32
+	Message string
+}
+
 var Statuses = []Status{
 	Status{0, "success"},
 	Status{1, "out of memory"},
@@ -71,4 +76,13 @@ var Statuses = []Status{
 	Status{67, "not equal"},
 	Status{68, "connection reset by peer"},
 	Status{69, "unknown attribute"},
+}
+
+// IsError returns true if the status is describing an error.
+func (s Status) IsError() bool {
+	return s.Code > 0
+}
+
+func (s Status) Error() string {
+	return s.Message
 }
