@@ -2,6 +2,7 @@ package omapi
 
 import (
 	"bytes"
+	"encoding/json"
 	"net"
 	"time"
 )
@@ -15,6 +16,59 @@ type Message struct {
 	Message       map[string][]byte
 	Object        map[string][]byte
 	Signature     []byte
+}
+
+func (m *Message) String() string {
+	tmpMessage := make(map[string]any)
+	for key, value := range m.Message {
+		tmpMessage[key] = string(value)
+	}
+
+	tmpObject := make(map[string]any)
+	for key, value := range m.Object {
+		switch key {
+		case "atsfp", "cltt", "tstp", "tsfp", "starts", "ends":
+			tmpObject[key] = time.Unix(int64(bytesToInt32(value)), 0)
+		case "hardware-address":
+			tmpObject[key] = net.HardwareAddr(value).String()
+		case "hardware-type":
+			tmpObject[key] = HardwareType(bytesToInt32(value)).String()
+		case "ip-address":
+			tmpObject[key] = net.IP(value)
+		case "state":
+			tmpObject[key] = LeaseState(bytesToInt32(value)).String()
+		case "remote-handle", "subnet", "pool", "flags":
+			tmpObject[key] = bytesToInt32(value)
+		default:
+			tmpObject[key] = string(value)
+		}
+	}
+
+	// TODO fix dhcp-client-identifier
+
+	tmp := struct {
+		AuthID        int32          `json:"auth-id"`
+		Opcode        Opcode         `json:"opcode"`
+		Handle        int32          `json:"handle"`
+		TransactionID int32          `json:"transaction-id"`
+		ResponseID    int32          `json:"response-id"`
+		Message       map[string]any `json:"message"`
+		Object        map[string]any `json:"object"`
+		Signature     string         `json:"signature"`
+	}{
+		AuthID:        m.AuthID,
+		Opcode:        m.Opcode,
+		Handle:        m.Handle,
+		TransactionID: m.TransactionID,
+		ResponseID:    m.ResponseID,
+		Message:       tmpMessage,
+		Object:        tmpObject,
+		Signature:     string(m.Signature),
+	}
+
+	ret, _ := json.Marshal(tmp)
+
+	return string(ret)
 }
 
 func NewMessage() *Message {

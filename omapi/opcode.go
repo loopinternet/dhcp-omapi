@@ -30,3 +30,7 @@ func (opcode Opcode) String() (ret string) {
 
 	return
 }
+
+func (opcode Opcode) MarshalText() ([]byte, error) {
+	return []byte(opcode.String()), nil
+}

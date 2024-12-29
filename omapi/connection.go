@@ -6,6 +6,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"net"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Connection struct {
@@ -26,7 +28,7 @@ func Dial(addr, username, key string) (*Connection, error) {
 	if len(username) > 0 && len(key) > 0 {
 		decodedKey, err := base64.StdEncoding.DecodeString(key)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		newAuth = &hmacMD5Authenticator{username, decodedKey, -1}
 	}
@@ -82,13 +84,18 @@ func (con *Connection) initializeAuthenticator(auth Authenticator) error {
 // will be returned instead.
 func (con *Connection) Query(msg *Message) (*Message, Status) {
 	msg.Sign(con.authenticator)
+
+	log.Debugf("Sending query: %s", msg)
+
 	con.send(msg.Bytes(false))
 	response := con.parseMessage()
 	if !response.IsResponseTo(msg) {
-		panic("received message is not the desired response")
+		log.Fatal("received message is not the desired response")
 	}
 
 	// TODO check authid
+
+	log.Debugf("Query response: %s", response)
 
 	return response, response.ToStatus()
 }
@@ -108,7 +115,7 @@ func (con *Connection) read() {
 	buf := make([]byte, 2048)
 	n, err := con.connection.Read(buf)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	con.inBuffer.Write(buf[0:n])

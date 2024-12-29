@@ -1,6 +1,7 @@
 package omapi
 
 import (
+	"encoding/json"
 	"net"
 	"time"
 )
@@ -49,6 +50,10 @@ func (state LeaseState) toBytes() []byte {
 	return int32ToBytes(int32(state))
 }
 
+func (state LeaseState) MarshalText() ([]byte, error) {
+	return []byte(state.String()), nil
+}
+
 type HardwareType int32
 
 const (
@@ -74,6 +79,10 @@ func (hw HardwareType) String() (ret string) {
 	return
 }
 
+func (hw HardwareType) MarshalText() ([]byte, error) {
+	return []byte(hw.String()), nil
+}
+
 type Lease struct {
 	State                LeaseState
 	IP                   net.IP
@@ -89,6 +98,41 @@ type Lease struct {
 	Atsfp  time.Time
 	Cltt   time.Time
 	Handle int32
+}
+
+func (lease Lease) String() string {
+
+	tmp := struct {
+		State                LeaseState   `json:"state"`
+		IP                   net.IP       `json:"ip"`
+		DHCPClientIdentifier []byte       `json:"dhcp-client-identifier"`
+		ClientHostname       string       `json:"client-hostname"`
+		Host                 int32        `json:"host"`
+		HardwareAddress      string       `json:"hardware-address"`
+		HardwareType         HardwareType `json:"hardware-type"`
+		Ends                 time.Time    `json:"lease-end-time"`
+		Tstp                 time.Time    `json:"tstp"`
+		Atsfp                time.Time    `json:"atsfp"`
+		Cltt                 time.Time    `json:"cltt"`
+		Handle               int32        `json:"handle"`
+	}{
+		State:                lease.State,
+		IP:                   lease.IP,
+		DHCPClientIdentifier: lease.DHCPClientIdentifier,
+		ClientHostname:       lease.ClientHostname,
+		Host:                 lease.Host,
+		HardwareAddress:      net.HardwareAddr(lease.HardwareAddress).String(),
+		HardwareType:         lease.HardwareType,
+		Ends:                 lease.Ends,
+		Tstp:                 lease.Tstp,
+		Atsfp:                lease.Atsfp,
+		Cltt:                 lease.Cltt,
+		Handle:               lease.Handle,
+	}
+
+	ret, _ := json.Marshal(tmp)
+
+	return string(ret)
 }
 
 func (lease Lease) toObject() map[string][]byte {

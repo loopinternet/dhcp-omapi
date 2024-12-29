@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"sort"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type buffer struct {
@@ -20,7 +22,7 @@ func (b *buffer) addBytes(data []byte) {
 
 func (b *buffer) add(data interface{}) {
 	if err := binary.Write(b.buffer, binary.BigEndian, data); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
