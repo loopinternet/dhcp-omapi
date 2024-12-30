@@ -1,4 +1,4 @@
-module github.com/loopinternet/dhcp-omapi
+module github.com/loopinternet/dhcp-management
 
 go 1.22.5
 
